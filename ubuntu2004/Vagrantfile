@@ -1,0 +1,22 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/ubuntu2004"
+
+  config.nfs.verify_installed = false
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  config.ssh.forward_x11 = true
+  config.vm.network "private_network", ip: "192.168.42.42"
+
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get upgrade
+    apt-get install curl libpam-pwquality
+
+    curl -sSl https://packages.microsoft.com/keys/microsoft.asc > /etc/apt/trusted.gpg.d/microsoft.asc
+    curl -sSl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/microsoft-ubuntu-focal-prod.list
+    echo 'deb [arch=amd64] https://packages.microsoft.com/repos/edge stable/main' > /etc/apt/sources.list.d/microsoft-edge-dev.list
+
+    apt-get install intune-portal microsoft-edge-dev
+
+    sed -i 's/^password.*pam_pwquality\.so.*$/password requisite pam_pwquality.so retry=3 minlen=12 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1/' /etc/pam.d/common-password
+  SHELL
+end
